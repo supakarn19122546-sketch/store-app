@@ -1439,13 +1439,27 @@ function fallbackParseText(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   const results = [];
   lines.forEach(line => {
-    const numMatches = line.match(/(\d+(?:\.\d+)?)/g);
+    const cleanLine = line.replace(/(\d+),(\d+)/g, '$1$2');
+    const numMatches = cleanLine.match(/(\d+(?:\.\d+)?)/g);
     if(numMatches && numMatches.length > 0) {
       const price = parseFloat(numMatches[numMatches.length - 1]);
       const qty = numMatches.length > 1 ? parseFloat(numMatches[0]) : 1;
-      const name = line.replace(/(\d+(?:\.\d+)?)/g, '').replace(/บาท|กก\.|แพ็ค|ชิ้น|\/|@/g, '').trim();
+      let name = cleanLine
+        .replace(/(\d+(?:\.\d+)?)/g, '')
+        .replace(/บาท|ถุง|กก\.|แพ็ค|ชิ้น|กล่อง|ขวด|ห่อ|\/|@|=|#/g, '')
+        .trim();
+      if(!name) {
+        name = cleanLine.replace(/(\d+(?:\.\d+)?)/g, '').trim();
+      }
       if(name && !isNaN(price)) {
-        results.push({ name, qty, unit: '', price });
+        const productMatch = typeof findProductByName === 'function' ? findProductByName(name) : null;
+        results.push({
+          name: name,
+          qty: qty,
+          unit: productMatch ? (productMatch.unit || '') : '',
+          price: price,
+          category: productMatch ? productMatch.category : 'frozen'
+        });
       }
     }
   });
@@ -1453,28 +1467,29 @@ function fallbackParseText(text) {
 }
 
 async function callExtractAPI(){
-  if(!sampleCap){
-    if(importMode === 'text') {
-      const text = document.getElementById('im_text').value.trim();
-      if(!text) throw new Error('no-text');
-      const fallbackItems = fallbackParseText(text);
-      if(fallbackItems.length > 0) return fallbackItems;
-    }
-    const err = new Error('sample-unavailable'); err.code='not_granted'; throw err;
-  }
-  if(importMode === 'image'){
-    if(!importImageFile) throw new Error('no-image');
-    return await sampleCap.json(EXTRACT_INSTRUCTION, { images: importImageFile, modelTier: 'default' });
-  } else {
+  if(importMode === 'text') {
     const text = document.getElementById('im_text').value.trim();
     if(!text) throw new Error('no-text');
-    return await sampleCap.json(EXTRACT_INSTRUCTION + '\n\nข้อความ:\n' + text, { modelTier: 'default' });
+    const localItems = fallbackParseText(text);
+    if(localItems.length > 0) return localItems;
+    if(sampleCap) {
+      return await sampleCap.json(EXTRACT_INSTRUCTION + '\n\nข้อความ:\n' + text, { modelTier: 'default' });
+    }
+    throw new Error('cannot-parse-text');
   }
+
+  // Image Mode
+  if(!importImageFile) throw new Error('no-image');
+  if(!sampleCap){
+    const err = new Error('sample-unavailable'); err.code='not_granted'; throw err;
+  }
+  return await sampleCap.json(EXTRACT_INSTRUCTION, { images: importImageFile, modelTier: 'default' });
 }
 
 function extractErrorMessage(err){
   const code = err && err.code;
-  if(code === 'not_granted') return 'ยังไม่อนุญาตให้หน้านี้ใช้ AI อ่านข้อมูล (หรือฟีเจอร์นี้ยังไม่พร้อมใช้งานนอกลิงก์ที่เผยแพร่)';
+  if(err && err.message === 'cannot-parse-text') return 'อ่านรายการไม่พบตัวเลขราคาสินค้า ลองพิมพ์เช่น: กุ้งขาว 150';
+  if(code === 'not_granted') return 'การอ่านจากรูปภาพต้องเปิดผ่าน Claude หรือสลับเป็นโหมด "พิมพ์/วางข้อความ" เพื่อใช้งานได้ทันที';
   if(code === 'images_unavailable') return 'หน้านี้ยังไม่รองรับการส่งรูปภาพ ลองโหมด "พิมพ์/วางข้อความ" แทน';
   if(code === 'image_rejected') return 'ไฟล์รูปภาพมีปัญหา (ชนิดไฟล์หรือขนาดไม่รองรับ) ลองรูปอื่น';
   if(code === 'rate_limited') return 'ใช้งานถี่เกินไป กรุณารอสักครู่แล้วลองใหม่';
