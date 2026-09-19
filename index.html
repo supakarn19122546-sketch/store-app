@@ -1435,8 +1435,33 @@ function onImageSelected(e){
   reader.readAsDataURL(file);
 }
 
+function fallbackParseText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  const results = [];
+  lines.forEach(line => {
+    const numMatches = line.match(/(\d+(?:\.\d+)?)/g);
+    if(numMatches && numMatches.length > 0) {
+      const price = parseFloat(numMatches[numMatches.length - 1]);
+      const qty = numMatches.length > 1 ? parseFloat(numMatches[0]) : 1;
+      const name = line.replace(/(\d+(?:\.\d+)?)/g, '').replace(/บาท|กก\.|แพ็ค|ชิ้น|\/|@/g, '').trim();
+      if(name && !isNaN(price)) {
+        results.push({ name, qty, unit: '', price });
+      }
+    }
+  });
+  return results;
+}
+
 async function callExtractAPI(){
-  if(!sampleCap){ const err = new Error('sample-unavailable'); err.code='not_granted'; throw err; }
+  if(!sampleCap){
+    if(importMode === 'text') {
+      const text = document.getElementById('im_text').value.trim();
+      if(!text) throw new Error('no-text');
+      const fallbackItems = fallbackParseText(text);
+      if(fallbackItems.length > 0) return fallbackItems;
+    }
+    const err = new Error('sample-unavailable'); err.code='not_granted'; throw err;
+  }
   if(importMode === 'image'){
     if(!importImageFile) throw new Error('no-image');
     return await sampleCap.json(EXTRACT_INSTRUCTION, { images: importImageFile, modelTier: 'default' });
