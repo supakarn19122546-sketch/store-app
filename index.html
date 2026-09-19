@@ -202,6 +202,18 @@
     .btn-primary, .btn-secondary, .add-btn { min-height: 44px; font-size: 14.5px; display: flex; align-items: center; justify-content: center; }
     .modal { padding: 20px; max-height: 90vh; border-radius: 12px; }
   }
+
+  /* Print Media Query for Catalog & Price Sheet */
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    .wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    header, .nav, .gh-status-bar, .conn-banner, .toolbar, .no-print, button, .modal, .overlay, .status, .mode-switch, .form-card, .search { display: none !important; }
+    .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; text-align: center; }
+    table { width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; font-size: 13px !important; }
+    th, td { border: 1px solid #666 !important; padding: 8px 10px !important; text-align: left !important; color: #000 !important; }
+    th { background-color: #f2f2f2 !important; font-weight: bold !important; }
+    .tag { border: 1px solid #666 !important; background: none !important; color: #000 !important; }
+  }
 </style>
 </head>
 <body>
@@ -234,6 +246,7 @@
   <div class="nav" id="mainNav">
     <button class="nav-btn active" data-tab="overview">ภาพรวม</button>
     <button class="nav-btn" data-tab="products">สินค้า &amp; ราคา</button>
+    <button class="nav-btn" data-tab="catalog">📋 ใบเสนอราคา &amp; บวกกำไร</button>
     <button class="nav-btn" data-tab="purchase">ซื้อสินค้า</button>
     <button class="nav-btn" data-tab="import">นำเข้ารูป/ข้อความ</button>
     <button class="nav-btn" data-tab="sell">ขายสินค้า</button>
@@ -846,11 +859,197 @@ document.getElementById('mainNav').addEventListener('click', (e)=>{
 function render(){
   if(currentTab === 'overview') return renderOverview();
   if(currentTab === 'products') return renderProducts();
+  if(currentTab === 'catalog') return renderCatalog();
   if(currentTab === 'purchase') return renderPurchase();
   if(currentTab === 'import') return renderImport();
   if(currentTab === 'sell') return renderSell();
   if(currentTab === 'suppliers') return renderSuppliers();
   if(currentTab === 'history') return renderHistory();
+}
+
+/* ---------------- CATALOG & PROFIT MARGIN ---------------- */
+let globalProfitMargin = 20;
+let globalProfitType = 'percent';
+
+function renderCatalog(){
+  let list = products.map(p => {
+    const cost = avgCostOf(p.id);
+    const stock = stockOf(p.id);
+    const profit = (p.salePrice || 0) - cost;
+    const marginPct = cost > 0 ? ((profit / cost) * 100) : 0;
+    return { ...p, cost, stock, profit, marginPct };
+  }).sort((a,b) => a.name.localeCompare(b.name, 'th'));
+
+  const printHeaderHtml = `
+    <div class="print-header" style="display:none;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #000;text-align:center;">
+      <h1 style="font-size:22px;margin:0 0 6px;font-family:'Noto Sans Thai',sans-serif;">ใบแจ้งราคาสินค้า / รายการสินค้าของร้าน</h1>
+      <div style="font-size:13px;color:#555;">วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'})} | อัปเดตล่าสุด</div>
+    </div>
+  `;
+
+  contentEl.innerHTML = printHeaderHtml + `
+    <div class="section-title no-print">คำนวณราคาขายตามบวกกำไร &amp; ออกใบเสนอราคาของร้าน</div>
+    
+    <div class="form-card no-print" style="max-width:100%;margin-bottom:20px;background:#F6F9F8;border:1.5px solid var(--border);">
+      <div style="font-weight:600;font-size:14.5px;margin-bottom:10px;color:var(--ink);">⚡ คำนวณตั้งราคาขายอัตโนมัติทั้งร้าน (Global Profit Margin)</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="field" style="margin-bottom:0;flex:1;min-width:160px;">
+          <label>รูปแบบการบวกกำไร</label>
+          <select id="cat_margin_type">
+            <option value="percent" ${globalProfitType==='percent'?'selected':''}>บวกกำไรแบบ % (เปอร์เซ็นต์จากทุน)</option>
+            <option value="baht" ${globalProfitType==='baht'?'selected':''}>บวกกำไรแบบ บาท (จำนวนเงินต่อหน่วย)</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;width:140px;">
+          <label>มูลค่ากำไร</label>
+          <input type="number" id="cat_margin_val" step="0.01" value="${globalProfitMargin}" placeholder="20">
+        </div>
+        <button class="btn-primary" id="cat_apply_all_btn" style="width:auto;padding:10px 20px;height:42px;">คำนวณและปรับราคาขายสินค้าทุกชิ้น</button>
+      </div>
+      <div class="hint" style="margin-top:8px;">
+        * เช่น ถ้าทุนเฉลี่ย 100 บาท เลือกแบบ % ใส่ 20 ➔ ราคาขายจะเป็น 120 บาท (กำไร 20 บาท)
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;" class="no-print">
+      <div style="font-weight:600;font-size:15px;">รายการราคาสินค้าทั้งหมด (${list.length} รายการ)</div>
+      <div style="display:flex;gap:8px;">
+        <button class="add-btn" id="printCatalogBtn" style="background:var(--frozen);color:#fff;padding:8px 16px;font-size:13.5px;">🖨️ พิมพ์ / บันทึก PDF</button>
+        <button class="add-btn" id="exportCsvBtn" style="background:var(--profit);color:#fff;padding:8px 16px;font-size:13.5px;">📊 บันทึกเป็น Excel (CSV)</button>
+      </div>
+    </div>
+
+    ${list.length === 0 ? `<div class="empty"><div class="empty-title">ยังไม่มีสินค้าในระบบ</div><div>เพิ่มสินค้าหรือนำเข้าราคาต้นทุนก่อน เพื่อคำนวณราคาขาย</div></div>` : `
+    <table id="catalogTable">
+      <thead><tr>
+        <th>ชื่อสินค้า</th>
+        <th>หมวดหมู่</th>
+        <th>หน่วย</th>
+        <th>ทุนเฉลี่ย (บาท)</th>
+        <th class="no-print">บวกกำไร</th>
+        <th>ราคาขาย (บาท)</th>
+        <th>กำไร/หน่วย (บาท)</th>
+        <th>คงเหลือ</th>
+      </tr></thead>
+      <tbody>
+        ${list.map(p => `
+          <tr data-id="${p.id}">
+            <td style="font-weight:600;">${escapeHtml(p.name)}</td>
+            <td><span class="tag ${p.category}">${p.category === 'frozen' ? 'แช่แข็ง' : 'สด'}</span></td>
+            <td>${escapeHtml(p.unit || '-')}</td>
+            <td style="font-family:'Oswald',sans-serif;font-weight:600;">฿${formatBaht(p.cost)}</td>
+            <td class="no-print">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="number" class="cat-item-margin" data-id="${p.id}" step="0.01" value="${p.marginPct.toFixed(1)}" style="width:70px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px;">
+                <span style="font-size:12px;color:var(--ink-soft)">%</span>
+              </div>
+            </td>
+            <td>
+              <input type="number" class="cat-item-saleprice" data-id="${p.id}" step="0.01" value="${p.salePrice || 0}" style="width:90px;padding:4px 8px;border:1.5px solid var(--frozen);border-radius:4px;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;">
+            </td>
+            <td class="profit-val" style="font-family:'Oswald',sans-serif;font-weight:600;color:var(${p.profit>=0?'--profit':'--danger'});">
+              ฿${formatBaht(p.profit)}
+            </td>
+            <td class="${p.stock<=5?'stock-low':''}">${p.stock} ${escapeHtml(p.unit||'')}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    `}
+  `;
+
+  if(list.length === 0) return;
+
+  const typeSelect = document.getElementById('cat_margin_type');
+  const valInput = document.getElementById('cat_margin_val');
+  const applyAllBtn = document.getElementById('cat_apply_all_btn');
+  const printBtn = document.getElementById('printCatalogBtn');
+  const exportBtn = document.getElementById('exportCsvBtn');
+
+  if(typeSelect) typeSelect.addEventListener('change', (e) => globalProfitType = e.target.value);
+  if(valInput) valInput.addEventListener('input', (e) => globalProfitMargin = parseFloat(e.target.value) || 0);
+
+  if(applyAllBtn) {
+    applyAllBtn.addEventListener('click', async () => {
+      const type = typeSelect.value;
+      const margin = parseFloat(valInput.value) || 0;
+      let count = 0;
+      products.forEach(p => {
+        const cost = avgCostOf(p.id);
+        if(type === 'percent') {
+          p.salePrice = Math.ceil(cost * (1 + (margin / 100)));
+        } else {
+          p.salePrice = Math.ceil(cost + margin);
+        }
+        p.updatedAt = new Date().toISOString();
+        count++;
+      });
+      renderCatalog();
+      saveState();
+      showToast(`ปรับคำนวณราคาขายสินค้าแล้ว ${count} รายการ`);
+    });
+  }
+
+  contentEl.querySelectorAll('.cat-item-margin').forEach(inp => {
+    inp.addEventListener('change', async (e) => {
+      const id = e.target.dataset.id;
+      const product = products.find(p => p.id === id);
+      if(!product) return;
+      const pct = parseFloat(e.target.value) || 0;
+      const cost = avgCostOf(product.id);
+      product.salePrice = Math.ceil(cost * (1 + (pct / 100)));
+      product.updatedAt = new Date().toISOString();
+      renderCatalog();
+      saveState();
+      showToast(`อัปเดตราคาขายของ "${product.name}" แล้ว`);
+    });
+  });
+
+  contentEl.querySelectorAll('.cat-item-saleprice').forEach(inp => {
+    inp.addEventListener('change', async (e) => {
+      const id = e.target.dataset.id;
+      const product = products.find(p => p.id === id);
+      if(!product) return;
+      const price = parseFloat(e.target.value) || 0;
+      product.salePrice = price;
+      product.updatedAt = new Date().toISOString();
+      renderCatalog();
+      saveState();
+      showToast(`อัปเดตราคาขายของ "${product.name}" แล้ว`);
+    });
+  });
+
+  if(printBtn) {
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  if(exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportCatalogCSV();
+    });
+  }
+}
+
+function exportCatalogCSV() {
+  let csv = '\uFEFF';
+  csv += 'ลำดับ,ชื่อสินค้า,หมวดหมู่,หน่วย,ราคาทุนเฉลี่ย(บาท),ราคาขาย(บาท),กำไรต่อหน่วย(บาท),คงเหลือในสต็อก\n';
+  products.slice().sort((a,b)=>a.name.localeCompare(b.name,'th')).forEach((p, i) => {
+    const cost = avgCostOf(p.id);
+    const profit = (p.salePrice || 0) - cost;
+    const stock = stockOf(p.id);
+    csv += `"${i+1}","${p.name.replace(/"/g,'""')}","${p.category==='frozen'?'แช่แข็ง':'สด'}","${p.unit||''}","${cost.toFixed(2)}","${(p.salePrice||0).toFixed(2)}","${profit.toFixed(2)}","${stock}"\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `รายการราคาสินค้า_${todayStr()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('ดาวน์โหลดไฟล์ Excel (CSV) เรียบร้อย');
 }
 
 /* ---------------- OVERVIEW ---------------- */
