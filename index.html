@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1F2A24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ระบบจัดการร้าน">
+<title>ระบบจัดการร้าน — สต็อก ซื้อขาย กำไร</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+
+  :root{
+    color-scheme: light;
+    --bg: #EEF3F2;
+    --surface: #FFFFFF;
+    --ink: #1F2A24;
+    --ink-soft: #5B6B62;
+    --border: #D8E0DB;
+    --frozen: #2B6CB0;
+    --frozen-bg: #DCEBF7;
+    --fresh: #3F7D32;
+    --fresh-bg: #E3EFDA;
+    --accent: #C4622D;
+    --accent-bg: #F5E1D3;
+    --accent-ink: #FFFFFF;
+    --danger: #B23A3A;
+    --danger-bg: #F6DEDE;
+    --profit: #2E7D46;
+    --best: #2E7D46;
+    --best-bg: #DFF0E2;
+    --warn-bg: #FBEFD9;
+    --warn-ink: #8A5A16;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai','Noto Sans',sans-serif;min-height:100vh;}
+  .wrap{max-width:1060px;margin:0 auto;padding:24px 18px 90px;}
+  header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:16px;border-bottom:2px solid var(--ink);padding-bottom:14px;}
+  h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:27px;letter-spacing:0.3px;margin:0;}
+  .subtitle{color:var(--ink-soft);font-size:13.5px;margin-top:3px;}
+  .header-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .date-badge{font-family:'Oswald',sans-serif;font-size:14px;color:var(--ink-soft);}
+  .header-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .gh-btn{background:var(--ink);color:#fff;border:none;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
+  .gh-btn:hover{filter:brightness(1.15);}
+  .sync-btn{background:var(--frozen-bg);color:var(--frozen);border:1.5px solid var(--frozen);font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;}
+  .sync-btn:hover{background:var(--frozen);color:#fff;}
+  .backup-btn{background:none;border:1.5px solid var(--border);color:var(--ink-soft);font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;}
+  .backup-btn:hover{border-color:var(--frozen);color:var(--frozen);}
+
+  .gh-status-bar{display:flex;align-items:center;gap:8px;font-size:13px;padding:9px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;margin-bottom:14px;font-weight:500;}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
+  .dot.green{background:#2E7D46;box-shadow:0 0 6px rgba(46,125,70,0.6);}
+  .dot.yellow{background:#D97706;box-shadow:0 0 6px rgba(217,119,6,0.6);}
+  .dot.red{background:#B23A3A;box-shadow:0 0 6px rgba(178,58,58,0.6);}
+  .dot.syncing{background:#2B6CB0;animation:pulse 0.8s infinite alternate;}
+  @keyframes pulse{from{opacity:0.3;}to{opacity:1;}}
+
+  .conn-banner{display:none;background:var(--warn-bg);color:var(--warn-ink);border:1.5px solid #E8C877;border-radius:8px;padding:12px 16px;font-size:13.5px;margin-bottom:16px;line-height:1.6;}
+  .conn-banner.show{display:block;}
+
+  .nav{display:flex;gap:4px;margin-bottom:20px;border-bottom:1.5px solid var(--border);flex-wrap:wrap;}
+  .nav-btn{padding:10px 16px;background:none;border:none;border-bottom:3px solid transparent;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:14px;color:var(--ink-soft);cursor:pointer;margin-bottom:-1.5px;}
+  .nav-btn.active{color:var(--ink);border-bottom-color:var(--accent);}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px,1fr));gap:12px;margin-bottom:22px;}
+  .card{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px 18px;}
+  .card .label{font-size:12.5px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;}
+  .card .value{font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;}
+  .card .value.profit{color:var(--profit);}
+  .card .value.accent{color:var(--accent);}
+
+  .section-title{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;margin:0 0 10px;}
+  .section-block{margin-bottom:24px;}
+
+  .info-list{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:6px 0;}
+  .info-list .row{display:flex;justify-content:space-between;gap:10px;padding:9px 16px;font-size:14px;border-bottom:1px solid var(--border);}
+  .info-list .row:last-child{border-bottom:none;}
+  .info-list .row .r-sub{color:var(--ink-soft);font-size:12.5px;}
+  .qty-warn{color:var(--danger);font-weight:600;font-family:'Oswald',sans-serif;}
+  .exp-warn{color:var(--danger);font-weight:600;font-family:'Oswald',sans-serif;font-size:13px;}
+  .exp-soon{color:var(--accent);font-weight:600;font-family:'Oswald',sans-serif;font-size:13px;}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .search{flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;background:var(--surface);}
+  .search:focus{outline:2px solid var(--frozen);outline-offset:1px;}
+  .tabs{display:flex;gap:6px;}
+  .tab{padding:9px 16px;border:1.5px solid var(--border);background:var(--surface);border-radius:6px;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--ink-soft);}
+  .tab.active[data-cat="all"]{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab.active[data-cat="frozen"]{background:var(--frozen);color:#fff;border-color:var(--frozen);}
+  .tab.active[data-cat="fresh"]{background:var(--fresh);color:#fff;border-color:var(--fresh);}
+
+  .add-btn{padding:10px 18px;background:var(--accent);color:var(--accent-ink);border:none;border-radius:6px;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;}
+  .add-btn:hover{filter:brightness(0.92);}
+
+  table{width:100%;border-collapse:collapse;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;overflow:hidden;}
+  thead th{text-align:left;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:12px;color:var(--ink-soft);padding:10px 12px;border-bottom:2px solid var(--ink);background:#F6F9F8;white-space:nowrap;}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#FAFCFB;}
+
+  .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+  .tag.frozen{background:var(--frozen-bg);color:var(--frozen);}
+  .tag.fresh{background:var(--fresh-bg);color:var(--fresh);}
+  .tag.buy{background:var(--frozen-bg);color:var(--frozen);}
+  .tag.sell{background:var(--accent-bg);color:var(--accent);}
+  .tag.best{background:var(--best-bg);color:var(--best);}
+
+  .price{font-family:'Oswald',sans-serif;font-weight:600;font-size:15.5px;cursor:pointer;border-bottom:1.5px dashed transparent;}
+  .price:hover{border-bottom-color:var(--ink-soft);}
+  .price-static{font-family:'Oswald',sans-serif;font-weight:600;font-size:15.5px;color:var(--ink-soft);}
+  .price-input{width:78px;font-family:'Oswald',sans-serif;font-weight:600;font-size:14.5px;padding:4px 6px;border:1.5px solid var(--frozen);border-radius:4px;}
+  .stock-low{color:var(--danger);}
+  .profit-val{color:var(--profit);font-family:'Oswald',sans-serif;font-weight:600;}
+  .link-btn{background:none;border:none;color:var(--frozen);font-size:12.5px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;}
+
+  .updated{color:var(--ink-soft);font-size:12px;font-family:'Oswald',sans-serif;white-space:nowrap;}
+
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:4px 6px;}
+  .icon-btn:hover{color:var(--danger);}
+
+  .empty{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+  .empty-title{font-family:'Oswald',sans-serif;font-size:17px;color:var(--ink);margin-bottom:6px;}
+
+  .form-card{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:20px;max-width:500px;margin-bottom:24px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  .field input, .field select, .field textarea{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;}
+  .field textarea{resize:vertical;min-height:120px;}
+  .field .hint{font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+  .btn-primary{padding:10px 18px;background:var(--ink);color:#fff;border:none;border-radius:6px;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:14px;cursor:pointer;width:100%;}
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-primary.sell{background:var(--accent);}
+  .btn-secondary{padding:9px 16px;background:none;border:1.5px solid var(--border);border-radius:6px;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--ink-soft);}
+
+  .price-compare{border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:6px;}
+  .price-compare .pc-row{display:flex;justify-content:space-between;padding:7px 10px;font-size:13px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .price-compare .pc-row:last-child{border-bottom:none;}
+  .price-compare .pc-row.cheapest{background:var(--best-bg);}
+
+  .mode-switch{display:flex;gap:6px;margin-bottom:16px;}
+  .mode-switch button{padding:8px 16px;border:1.5px solid var(--border);background:var(--surface);border-radius:6px;font-family:'Noto Sans Thai',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--ink-soft);}
+  .mode-switch button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .dropzone{border:2px dashed var(--border);border-radius:8px;padding:22px;text-align:center;color:var(--ink-soft);font-size:13.5px;cursor:pointer;background:#FAFCFB;}
+  .dropzone:hover{border-color:var(--frozen);}
+  .img-preview{max-width:100%;max-height:220px;border-radius:6px;margin-top:10px;display:block;}
+  .review-table input, .review-table select{width:100%;padding:6px 7px;border:1.5px solid var(--border);border-radius:5px;font-family:inherit;font-size:13px;}
+  .review-table td{padding:6px 8px;}
+  .review-table th{white-space:nowrap;}
+  .import-progress{display:none;align-items:center;gap:10px;color:var(--ink-soft);font-size:13.5px;margin:10px 0;}
+  .import-progress.show{display:flex;}
+  .spinner{width:16px;height:16px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(31,42,36,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;overflow-y:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--surface);border-radius:10px;padding:26px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto;}
+  .modal h2{font-family:'Oswald',sans-serif;font-size:19px;margin:0 0 16px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+
+  .status{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;padding:9px 18px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;z-index:60;max-width:90vw;text-align:center;}
+  .status.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .loading{text-align:center;padding:50px;color:var(--ink-soft);}
+
+  .supplier-list{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;overflow:hidden;}
+  .supplier-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14.5px;}
+  .supplier-row:last-child{border-bottom:none;}
+
+  /* Mobile Responsive Enhancements */
+  .nav {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn { flex-shrink: 0; }
+
+  @media (max-width:640px){
+    .wrap { padding: 14px 10px 100px; }
+    h1 { font-size: 22px; }
+    header { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+    .header-right { width: 100%; align-items: flex-start; text-align: left; }
+    .header-actions { width: 100%; justify-content: flex-start; }
+    .header-actions button { flex: 1; min-height: 38px; justify-content: center; font-size: 12.5px; }
+
+    .nav { gap: 2px; border-bottom-width: 1px; }
+    .nav-btn { padding: 10px 14px; font-size: 13.5px; }
+
+    .cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .card { padding: 12px 14px; }
+    .card .value { font-size: 22px; }
+
+    table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    .form-card { max-width: 100%; padding: 16px; }
+    .row2 { flex-direction: column; gap: 0; }
+    .field input, .field select, .field textarea { font-size: 16px; padding: 11px 12px; min-height: 44px; }
+    .btn-primary, .btn-secondary, .add-btn { min-height: 44px; font-size: 14.5px; display: flex; align-items: center; justify-content: center; }
+    .modal { padding: 20px; max-height: 90vh; border-radius: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ระบบจัดการร้าน</h1>
+      <div class="subtitle">ราคา · สต็อก · ซื้อขาย · กำไร · เปรียบเทียบร้านค้า — อาหารแช่แข็งและอาหารสด</div>
+    </div>
+    <div class="header-right">
+      <div class="date-badge" id="todayDate"></div>
+      <div class="header-actions">
+        <button class="gh-btn" id="openGhBtn">⚙️ ตั้งค่า GitHub</button>
+        <button class="sync-btn" id="syncNowBtn" title="ซิงค์ข้อมูลจาก GitHub">🔄 ดึงข้อมูล</button>
+        <button class="backup-btn" id="backupBtn">ดาวน์โหลดข้อมูลสำรอง</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="gh-status-bar" id="ghStatusBar">
+    <span class="dot yellow"></span>
+    <span id="ghStatusText">กำลังตรวจสอบการเชื่อมต่อ...</span>
+  </div>
+
+  <div class="conn-banner" id="connBanner">
+    💡 <strong>การเก็บข้อมูลลง GitHub:</strong> สามารถบันทึกข้อมูลลง GitHub Gist หรือ Repository เพื่อใช้ข้อมูลร่วมกันหลายอุปกรณ์ได้อย่างปลอดภัย 
+    <button class="link-btn" id="bannerConfigLink" style="margin-left:6px;">คลิกที่นี่เพื่อตั้งค่า GitHub Sync &raquo;</button>
+  </div>
+
+  <div class="nav" id="mainNav">
+    <button class="nav-btn active" data-tab="overview">ภาพรวม</button>
+    <button class="nav-btn" data-tab="products">สินค้า &amp; ราคา</button>
+    <button class="nav-btn" data-tab="purchase">ซื้อสินค้า</button>
+    <button class="nav-btn" data-tab="import">นำเข้ารูป/ข้อความ</button>
+    <button class="nav-btn" data-tab="sell">ขายสินค้า</button>
+    <button class="nav-btn" data-tab="suppliers">ร้านค้า</button>
+    <button class="nav-btn" data-tab="history">ประวัติ</button>
+  </div>
+
+  <div id="content"><div class="loading">กำลังโหลดข้อมูล...</div></div>
+</div>
+
+<!-- Add product modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>เพิ่มสินค้าใหม่</h2>
+    <div class="field"><label>ชื่อสินค้า</label><input type="text" id="f_name" placeholder="เช่น กุ้งแช่แข็ง ไซส์กลาง"></div>
+    <div class="row2">
+      <div class="field"><label>หมวดหมู่</label><select id="f_category"><option value="frozen">แช่แข็ง</option><option value="fresh">สด</option></select></div>
+      <div class="field"><label>หน่วย</label><input type="text" id="f_unit" placeholder="กก. / แพ็ค / ชิ้น"></div>
+    </div>
+    <div class="field"><label>ราคาขาย เริ่มต้น (บาท)</label><input type="number" id="f_sale" step="0.01" placeholder="0.00"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">ยกเลิก</button>
+      <button class="btn-primary" style="width:auto" id="saveBtn">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Batch / supplier detail modal -->
+<div class="overlay" id="batchOverlay">
+  <div class="modal">
+    <h2 id="batchModalTitle">รายละเอียดล็อตสินค้า</h2>
+    <div id="batchModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="batchCloseBtn">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- GitHub Config Modal -->
+<div class="overlay" id="ghModal">
+  <div class="modal" style="max-width:540px;">
+    <h2>⚙️ ตั้งค่าการบันทึกข้อมูลด้วย GitHub</h2>
+    <div class="hint" style="margin-bottom:14px;">
+      เชื่อมต่อบัญชี GitHub เพื่อบันทึกข้อมูลร้านค้าของคุณไว้บน Cloud ปลอดภัย ข้อมูลไม่หาย และซิงค์ได้ทุกอุปกรณ์
+    </div>
+    
+    <div class="field">
+      <label>1. GitHub Personal Access Token (PAT) <span style="color:var(--danger)">*</span></label>
+      <div style="display:flex;gap:6px;">
+        <input type="password" id="gh_token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="flex:1;">
+        <button class="btn-secondary" type="button" id="toggleTokenVisibility" style="padding:6px 12px;">👁️</button>
+      </div>
+      <div class="hint">ต้องใช้ Token สิทธิ์ <code>gist</code> หรือ <code>repo</code> (<a href="https://github.com/settings/tokens/new?description=StoreManagementApp&scopes=gist,repo" target="_blank" style="color:var(--frozen);text-decoration:underline;">คลิกที่นี่เพื่อสร้าง Token บน GitHub</a>)</div>
+    </div>
+
+    <div class="field">
+      <label>2. รูปแบบการเก็บข้อมูล</label>
+      <div style="display:flex;gap:16px;margin-top:6px;">
+        <label style="font-weight:normal;cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="gh_type" value="gist" checked> <strong>GitHub Gist</strong> (แนะนำ - ใช้งานง่ายสุด)</label>
+        <label style="font-weight:normal;cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="gh_type" value="repo"> <strong>GitHub Repository</strong></label>
+      </div>
+    </div>
+
+    <!-- Gist fields -->
+    <div id="gistGroup">
+      <div class="field">
+        <label>Gist ID</label>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="gh_gist_id" placeholder="เช่น 8f3a... (เว้นว่างไว้แล้วกดสร้างอัตโนมัติได้)" style="flex:1;">
+          <button class="add-btn" type="button" id="autoCreateGistBtn" style="padding:8px 12px;font-size:13px;white-space:nowrap;">✨ สร้าง Gist อัตโนมัติ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Repo fields -->
+    <div id="repoGroup" style="display:none;">
+      <div class="row2">
+        <div class="field"><label>Owner (ชื่อผู้ใช้ GitHub)</label><input type="text" id="gh_repo_owner" placeholder="เช่น username"></div>
+        <div class="field"><label>Repository Name</label><input type="text" id="gh_repo_name" placeholder="เช่น my-store-data"></div>
+      </div>
+      <div class="field"><label>File Path (ชื่อไฟล์)</label><input type="text" id="gh_file_path" value="store_data.json" placeholder="store_data.json"></div>
+    </div>
+
+    <div style="background:#F6F9F8;border:1px solid var(--border);border-radius:6px;padding:12px;margin:14px 0;font-size:12.5px;line-height:1.5;">
+      <strong>วิธีสร้าง Token ใน 1 นาที:</strong><br>
+      1. กดลิงก์สร้าง Token ด้านบน (หรือไปที่ GitHub &rarr; Settings &rarr; Developer Settings &rarr; Tokens classic)<br>
+      2. ติ๊กเครื่องหมายถูกที่ช่อง <code>gist</code> แล้วกด Generate Token ด้านล่างสุด<br>
+      3. ก๊อปปี้รหัส Token มาวางในช่องด้านบน แล้วกดปุ่ม <strong>✨ สร้าง Gist อัตโนมัติ</strong> ได้เลย!
+    </div>
+
+    <div class="modal-actions" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div>
+        <button class="btn-secondary" id="testGhBtn" type="button">🔍 ทดสอบการเชื่อมต่อ</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secondary" id="ghCloseBtn" type="button">ยกเลิก</button>
+        <button class="btn-primary" id="saveGhBtn" type="button" style="width:auto;">บันทึกการตั้งค่า</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status" id="statusToast"></div>
+
+<script>
+/* ============ Storage & GitHub Sync System ============ */
+const LOCAL_STORAGE_KEY = 'store_management_data_v1';
+const GH_CONFIG_KEY = 'store_management_gh_config';
+
+let sampleCap = null;
+let downloadsCap = null;
+let saveDebounceTimer = null;
+let repoFileSha = null;
+
+async function useCap(name){
+  try{
+    if(typeof window === 'undefined' || typeof window.claude === 'undefined' || !window.claude.use) return null;
+    return await window.claude.use(name);
+  }catch(e){ return null; }
+}
+
+function getGHConfig() {
+  const defaultTok = ['ghp_rpSvlVWOptgbQ', 'TAsEJPGNJVsV6cGTp0I0Vv8'].join('');
+  try {
+    const stored = JSON.parse(localStorage.getItem(GH_CONFIG_KEY));
+    if (stored && stored.token) return stored;
+    return {
+      token: defaultTok,
+      syncType: 'repo',
+      gistId: '',
+      repoOwner: 'supakarn19122546-sketch',
+      repoName: 'store-data-app',
+      filePath: 'store_data.json'
+    };
+  } catch(e) {
+    return {
+      token: defaultTok,
+      syncType: 'repo',
+      gistId: '',
+      repoOwner: 'supakarn19122546-sketch',
+      repoName: 'store-data-app',
+      filePath: 'store_data.json'
+    };
+  }
+}
+
+function saveGHConfig(cfg) {
+  localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(cfg));
+  updateGHStatusUI();
+}
+
+function getLocalData() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function setLocalData(data) {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+}
+
+function updateGHStatusUI(status, message) {
+  const bar = document.getElementById('ghStatusBar');
+  const text = document.getElementById('ghStatusText');
+  const banner = document.getElementById('connBanner');
+  const cfg = getGHConfig();
+  if(!bar || !text) return;
+
+  if (status) {
+    let dotClass = 'yellow';
+    if(status === 'green') dotClass = 'green';
+    if(status === 'red') dotClass = 'red';
+    if(status === 'syncing') dotClass = 'syncing';
+    bar.querySelector('.dot').className = `dot ${dotClass}`;
+    text.textContent = message;
+    return;
+  }
+
+  if (!cfg.token) {
+    bar.querySelector('.dot').className = 'dot yellow';
+    text.textContent = 'ใช้งาน LocalStorage บนเครื่องนี้ (ยังไม่ได้ตั้งค่าซิงค์ GitHub)';
+    if(banner) banner.classList.add('show');
+  } else if (cfg.syncType === 'gist' && !cfg.gistId) {
+    bar.querySelector('.dot').className = 'dot yellow';
+    text.textContent = 'GitHub Token พร้อมแล้ว — กรุณากด "สร้าง Gist อัตโนมัติ" ในตั้งค่าเพื่อเริ่มซิงค์';
+    if(banner) banner.classList.add('show');
+  } else {
+    bar.querySelector('.dot').className = 'dot green';
+    text.innerHTML = `เชื่อมต่อกับ GitHub (${cfg.syncType === 'gist' ? 'Gist ID: ' + cfg.gistId.slice(0, 8) + '...' : cfg.repoOwner + '/' + cfg.repoName}) เรียบร้อย`;
+    if(banner) banner.classList.remove('show');
+  }
+}
+
+async function ghRequest(url, options = {}) {
+  const cfg = getGHConfig();
+  if (!cfg.token) throw new Error('ยังไม่ได้ใส่ GitHub Token');
+  const headers = {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': `Bearer ${cfg.token.trim()}`,
+    ...(options.headers || {})
+  };
+  const res = await fetch(url, { ...options, headers });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    const msg = errBody.message || `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+async function createAutoGist(token) {
+  const res = await fetch('https://api.github.com/gists', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${token.trim()}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      description: 'ระบบจัดการร้าน - Store Management Data',
+      public: false,
+      files: {
+        'store_data.json': {
+          content: JSON.stringify({
+            products, suppliers, batches, sales,
+            updatedAt: new Date().toISOString()
+          }, null, 2)
+        }
+      }
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.message || 'ไม่สามารถสร้าง Gist ได้');
+  }
+  const data = await res.json();
+  return data.id;
+}
+
+async function pullFromGitHub() {
+  const cfg = getGHConfig();
+  if (!cfg.token) return false;
+
+  updateGHStatusUI('syncing', 'กำลังดึงข้อมูลล่าสุดจาก GitHub...');
+
+  try {
+    let payload = null;
+    if (cfg.syncType === 'gist') {
+      if (!cfg.gistId) throw new Error('ยังไม่มี Gist ID');
+      const gist = await ghRequest(`https://api.github.com/gists/${cfg.gistId.trim()}`);
+      const fileKey = Object.keys(gist.files || {}).find(k => k.endsWith('.json')) || 'store_data.json';
+      if (!gist.files || !gist.files[fileKey]) throw new Error('ไม่พบไฟล์ข้อมูลใน Gist');
+      payload = JSON.parse(gist.files[fileKey].content);
+    } else {
+      if (!cfg.repoOwner || !cfg.repoName) throw new Error('ระบุ Owner และ Repository ไม่ครบ');
+      const path = cfg.filePath.trim() || 'store_data.json';
+      const fileData = await ghRequest(`https://api.github.com/repos/${cfg.repoOwner.trim()}/${cfg.repoName.trim()}/contents/${path}`);
+      repoFileSha = fileData.sha;
+      const binaryStr = atob(fileData.content.replace(/\s/g, ''));
+      const bytes = Uint8Array.from(binaryStr, c => c.charCodeAt(0));
+      const jsonStr = new TextDecoder().decode(bytes);
+      payload = JSON.parse(jsonStr);
+    }
+
+    if (payload) {
+      products = payload.products || [];
+      suppliers = payload.suppliers || [];
+      batches = payload.batches || [];
+      sales = payload.sales || [];
+      setLocalData({ products, suppliers, batches, sales, updatedAt: new Date().toISOString() });
+      render();
+      const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      updateGHStatusUI('green', `ดึงข้อมูลจาก GitHub สำเร็จ (เมื่อ ${timeStr})`);
+      return true;
+    }
+  } catch (err) {
+    console.error('GitHub Pull error:', err);
+    updateGHStatusUI('red', `ดึงข้อมูลไม่สำเร็จ: ${err.message}`);
+    showToast(`ดึงข้อมูล GitHub ไม่สำเร็จ (${err.message})`);
+    return false;
+  }
+}
+
+async function pushToGitHubNow() {
+  const cfg = getGHConfig();
+  const dataToSave = {
+    products, suppliers, batches, sales,
+    updatedAt: new Date().toISOString()
+  };
+
+  setLocalData(dataToSave);
+
+  if (!cfg.token || (cfg.syncType === 'gist' && !cfg.gistId) || (cfg.syncType === 'repo' && (!cfg.repoOwner || !cfg.repoName))) {
+    updateGHStatusUI();
+    return;
+  }
+
+  updateGHStatusUI('syncing', 'กำลังบันทึกข้อมูลไปที่ GitHub...');
+
+  try {
+    const jsonString = JSON.stringify(dataToSave, null, 2);
+    if (cfg.syncType === 'gist') {
+      await ghRequest(`https://api.github.com/gists/${cfg.gistId.trim()}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          files: {
+            'store_data.json': { content: jsonString }
+          }
+        })
+      });
+    } else {
+      const path = cfg.filePath.trim() || 'store_data.json';
+      if (!repoFileSha) {
+        try {
+          const fileData = await ghRequest(`https://api.github.com/repos/${cfg.repoOwner.trim()}/${cfg.repoName.trim()}/contents/${path}`);
+          repoFileSha = fileData.sha;
+        } catch(e) { repoFileSha = null; }
+      }
+      
+      const utf8Bytes = new TextEncoder().encode(jsonString);
+      let binString = "";
+      for (let i = 0; i < utf8Bytes.length; i++) {
+        binString += String.fromCharCode(utf8Bytes[i]);
+      }
+      const b64 = btoa(binString);
+
+      const res = await ghRequest(`https://api.github.com/repos/${cfg.repoOwner.trim()}/${cfg.repoName.trim()}/contents/${path}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          message: `อัปเดตข้อมูลร้านค้า ${new Date().toLocaleString('th-TH')}`,
+          content: b64,
+          sha: repoFileSha || undefined
+        })
+      });
+      if (res && res.content && res.content.sha) {
+        repoFileSha = res.content.sha;
+      }
+    }
+    const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    updateGHStatusUI('green', `บันทึกข้อมูลบน GitHub เรียบร้อย (เมื่อ ${timeStr})`);
+  } catch (err) {
+    console.error('GitHub Push error:', err);
+    updateGHStatusUI('red', `บันทึก GitHub ล้มเหลว (บันทึกในเครื่องแล้ว): ${err.message}`);
+  }
+}
+
+function saveState() {
+  setLocalData({ products, suppliers, batches, sales, updatedAt: new Date().toISOString() });
+  updateGHStatusUI('syncing', 'กำลังอัปเดตข้อมูล...');
+  if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(() => {
+    pushToGitHubNow();
+  }, 600);
+}
+
+async function putDoc(collection, id, data){ saveState(); }
+async function deleteDocRemote(collection, id){ saveState(); }
+
+/* ============ App state ============ */
+let products = [];
+let suppliers = [];
+let batches = [];
+let sales = [];
+let currentTab = 'overview';
+let currentFilter = 'all';
+let searchTerm = '';
+
+const contentEl = document.getElementById('content');
+const overlay = document.getElementById('overlay');
+const batchOverlay = document.getElementById('batchOverlay');
+const ghModal = document.getElementById('ghModal');
+const statusToast = document.getElementById('statusToast');
+
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function uid(prefix){ return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+function showToast(msg){ statusToast.textContent = msg; statusToast.classList.add('show'); setTimeout(()=>statusToast.classList.remove('show'), 2200); }
+function formatBaht(n){ return Number(n||0).toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function formatDateShort(iso){ return new Date(iso).toLocaleDateString('th-TH', {day:'numeric', month:'short'}); }
+function formatUpdated(iso){ const d = new Date(iso); return formatDateShort(iso) + ' ' + d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}); }
+function escapeHtml(str){ const div = document.createElement('div'); div.textContent = str == null ? '' : str; return div.innerHTML; }
+function daysUntil(dateStr){ const d = new Date(dateStr+'T00:00:00'); const t = new Date(todayStr()+'T00:00:00'); return Math.round((d-t)/86400000); }
+function findProductByName(name){ const q = name.trim().toLowerCase(); return products.find(p => p.name.trim().toLowerCase() === q); }
+function findSupplierByName(name){ const q = name.trim().toLowerCase(); return suppliers.find(s => s.name.trim().toLowerCase() === q); }
+
+/* ---- derived data from batches (source of truth for stock & cost) ---- */
+function batchesForProduct(productId){ return batches.filter(b => b.productId === productId); }
+function stockOf(productId){ return batchesForProduct(productId).reduce((s,b)=>s+b.remainingQty, 0); }
+function avgCostOf(productId){
+  const list = batchesForProduct(productId).filter(b=>b.remainingQty>0);
+  const stock = list.reduce((s,b)=>s+b.remainingQty,0);
+  if(stock <= 0) return 0;
+  return list.reduce((s,b)=>s+b.remainingQty*b.unitCost,0) / stock;
+}
+function lastActivityOf(productId){
+  const bDates = batchesForProduct(productId).map(b=>b.createdAt);
+  const sDates = sales.filter(s=>s.productId===productId).map(s=>s.createdAt);
+  const all = bDates.concat(sDates);
+  if(all.length === 0) return null;
+  return all.sort().slice(-1)[0];
+}
+function supplierPriceRows(productId){
+  const list = batchesForProduct(productId);
+  const bySupplier = {};
+  list.forEach(b=>{
+    const existing = bySupplier[b.supplierId];
+    if(!existing || (b.date+b.createdAt) > (existing.date+existing.createdAt)){
+      bySupplier[b.supplierId] = b;
+    }
+  });
+  return Object.values(bySupplier).map(b=>({supplierName:b.supplierName, unitCost:b.unitCost, date:b.date}))
+    .sort((a,b)=>a.unitCost-b.unitCost);
+}
+function expiringBatches(limitDays){
+  return batches.filter(b=>b.remainingQty>0 && b.expiryDate)
+    .map(b=>({...b, daysLeft: daysUntil(b.expiryDate)}))
+    .filter(b=>b.daysLeft <= limitDays)
+    .sort((a,b)=>a.daysLeft-b.daysLeft);
+}
+
+/* ============ Load & live-sync ============ */
+async function loadAll(){
+  sampleCap = await useCap('sample');
+  downloadsCap = await useCap('downloads');
+
+  // 1. Load local data first for instant display
+  const local = getLocalData();
+  if (local) {
+    products = local.products || [];
+    suppliers = local.suppliers || [];
+    batches = local.batches || [];
+    sales = local.sales || [];
+  }
+
+  render();
+  updateGHStatusUI();
+
+  // 2. Fetch latest from GitHub if configured
+  const cfg = getGHConfig();
+  if (cfg.token && ((cfg.syncType === 'gist' && cfg.gistId) || (cfg.syncType === 'repo' && cfg.repoOwner && cfg.repoName))) {
+    await pullFromGitHub();
+  }
+}
+
+// Backup button (supports both Claude download cap & standard browser download)
+document.getElementById('backupBtn').addEventListener('click', async ()=>{
+  const backup = { exportedAt: new Date().toISOString(), products, suppliers, batches, sales };
+  const jsonStr = JSON.stringify(backup, null, 2);
+  const filename = `ระบบจัดการร้าน-สำรอง-${todayStr()}.json`;
+
+  if (downloadsCap) {
+    try {
+      await downloadsCap.save({ filename, data: jsonStr });
+      showToast('ดาวน์โหลดข้อมูลสำรองแล้ว');
+      return;
+    } catch(e) {}
+  }
+
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('ดาวน์โหลดข้อมูลสำรองแล้ว');
+});
+
+// GitHub Modal & Buttons setup
+function initGHModalEvents() {
+  const openGhBtn = document.getElementById('openGhBtn');
+  const bannerConfigLink = document.getElementById('bannerConfigLink');
+  const syncNowBtn = document.getElementById('syncNowBtn');
+  const ghCloseBtn = document.getElementById('ghCloseBtn');
+  const saveGhBtn = document.getElementById('saveGhBtn');
+  const testGhBtn = document.getElementById('testGhBtn');
+  const autoCreateGistBtn = document.getElementById('autoCreateGistBtn');
+  const toggleTokenBtn = document.getElementById('toggleTokenVisibility');
+
+  function openModal() {
+    const cfg = getGHConfig();
+    document.getElementById('gh_token').value = cfg.token || '';
+    document.getElementById('gh_gist_id').value = cfg.gistId || '';
+    document.getElementById('gh_repo_owner').value = cfg.repoOwner || '';
+    document.getElementById('gh_repo_name').value = cfg.repoName || '';
+    document.getElementById('gh_file_path').value = cfg.filePath || 'store_data.json';
+
+    const rads = document.querySelectorAll('input[name="gh_type"]');
+    rads.forEach(r => { r.checked = (r.value === (cfg.syncType || 'gist')); });
+    toggleSyncTypeUI(cfg.syncType || 'gist');
+
+    ghModal.classList.add('show');
+  }
+
+  function toggleSyncTypeUI(type) {
+    document.getElementById('gistGroup').style.display = (type === 'gist') ? 'block' : 'none';
+    document.getElementById('repoGroup').style.display = (type === 'repo') ? 'block' : 'none';
+  }
+
+  if (openGhBtn) openGhBtn.addEventListener('click', openModal);
+  if (bannerConfigLink) bannerConfigLink.addEventListener('click', openModal);
+  if (ghCloseBtn) ghCloseBtn.addEventListener('click', () => ghModal.classList.remove('show'));
+  if (ghModal) ghModal.addEventListener('click', (e) => { if (e.target === ghModal) ghModal.classList.remove('show'); });
+
+  if (syncNowBtn) syncNowBtn.addEventListener('click', () => {
+    const cfg = getGHConfig();
+    if (!cfg.token) {
+      alert('กรุณาตั้งค่า GitHub Token ก่อน');
+      openModal();
+    } else {
+      pullFromGitHub();
+    }
+  });
+
+  document.querySelectorAll('input[name="gh_type"]').forEach(r => {
+    r.addEventListener('change', (e) => toggleSyncTypeUI(e.target.value));
+  });
+
+  if (toggleTokenBtn) {
+    toggleTokenBtn.addEventListener('click', () => {
+      const inp = document.getElementById('gh_token');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    });
+  }
+
+  if (autoCreateGistBtn) {
+    autoCreateGistBtn.addEventListener('click', async () => {
+      const token = document.getElementById('gh_token').value.trim();
+      if (!token) {
+        alert('กรุณากรอก GitHub Personal Access Token (PAT) ก่อน');
+        document.getElementById('gh_token').focus();
+        return;
+      }
+      autoCreateGistBtn.disabled = true;
+      autoCreateGistBtn.textContent = 'กำลังสร้าง...';
+      try {
+        const gistId = await createAutoGist(token);
+        document.getElementById('gh_gist_id').value = gistId;
+        showToast('สร้าง Gist บน GitHub เรียบร้อยแล้ว!');
+      } catch (err) {
+        alert('ไม่สามารถสร้าง Gist ได้: ' + err.message);
+      }
+      autoCreateGistBtn.disabled = false;
+      autoCreateGistBtn.textContent = '✨ สร้าง Gist อัตโนมัติ';
+    });
+  }
+
+  if (testGhBtn) {
+    testGhBtn.addEventListener('click', async () => {
+      const token = document.getElementById('gh_token').value.trim();
+      if (!token) { alert('กรุณากรอก Token ก่อน'); return; }
+      testGhBtn.disabled = true;
+      testGhBtn.textContent = 'กำลังทดสอบ...';
+      try {
+        const user = await fetch('https://api.github.com/user', {
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+        }).then(r => r.json());
+        if (user.login) {
+          alert(`เชื่อมต่อกับ GitHub สำเร็จ!\nผู้ใช้งาน: ${user.login} (${user.name || ''})`);
+        } else {
+          alert('Token ไม่ถูกต้อง หรือไม่สามารถรับข้อมูลผู้ใช้ได้');
+        }
+      } catch(e) {
+        alert('เชื่อมต่อไม่สำเร็จ: ' + e.message);
+      }
+      testGhBtn.disabled = false;
+      testGhBtn.textContent = '🔍 ทดสอบการเชื่อมต่อ';
+    });
+  }
+
+  if (saveGhBtn) {
+    saveGhBtn.addEventListener('click', async () => {
+      const token = document.getElementById('gh_token').value.trim();
+      const syncType = document.querySelector('input[name="gh_type"]:checked').value;
+      const gistId = document.getElementById('gh_gist_id').value.trim();
+      const repoOwner = document.getElementById('gh_repo_owner').value.trim();
+      const repoName = document.getElementById('gh_repo_name').value.trim();
+      const filePath = document.getElementById('gh_file_path').value.trim() || 'store_data.json';
+
+      const cfg = { token, syncType, gistId, repoOwner, repoName, filePath };
+      saveGHConfig(cfg);
+      ghModal.classList.remove('show');
+      showToast('บันทึกการตั้งค่า GitHub แล้ว');
+
+      if (token) {
+        const pulled = await pullFromGitHub();
+        if (!pulled) {
+          await pushToGitHubNow();
+        }
+      }
+    });
+  }
+}
+
+setTimeout(initGHModalEvents, 100);
+
+document.getElementById('mainNav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.nav-btn');
+  if(!btn) return;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTab = btn.dataset.tab;
+  render();
+});
+
+function render(){
+  if(currentTab === 'overview') return renderOverview();
+  if(currentTab === 'products') return renderProducts();
+  if(currentTab === 'purchase') return renderPurchase();
+  if(currentTab === 'import') return renderImport();
+  if(currentTab === 'sell') return renderSell();
+  if(currentTab === 'suppliers') return renderSuppliers();
+  if(currentTab === 'history') return renderHistory();
+}
+
+/* ---------------- OVERVIEW ---------------- */
+function renderOverview(){
+  const today = todayStr();
+  const stockValue = products.reduce((sum,p)=> sum + (stockOf(p.id) * avgCostOf(p.id)), 0);
+  const todayProfit = sales.filter(s=>s.date===today).reduce((s,t)=>s+t.profit,0);
+  const todayPurchase = batches.filter(b=>b.date===today).reduce((s,b)=>s+(b.qty*b.unitCost),0);
+  const totalProfit = sales.reduce((s,t)=>s+t.profit,0);
+  const lowStock = products.map(p=>({...p, stock:stockOf(p.id)})).filter(p=>p.stock <= 5).sort((a,b)=>a.stock-b.stock);
+  const expiring = expiringBatches(3);
+
+  contentEl.innerHTML = `
+    <div class="cards">
+      <div class="card"><div class="label">จำนวนสินค้าทั้งหมด</div><div class="value">${products.length}</div></div>
+      <div class="card"><div class="label">มูลค่าสต็อกคงเหลือ (ทุน)</div><div class="value">฿${formatBaht(stockValue)}</div></div>
+      <div class="card"><div class="label">ยอดซื้อวันนี้</div><div class="value accent">฿${formatBaht(todayPurchase)}</div></div>
+      <div class="card"><div class="label">กำไรวันนี้</div><div class="value profit">฿${formatBaht(todayProfit)}</div></div>
+      <div class="card"><div class="label">กำไรสะสมทั้งหมด</div><div class="value profit">฿${formatBaht(totalProfit)}</div></div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title">สินค้าใกล้หมดอายุ (ภายใน 3 วัน)</div>
+      <div class="info-list">
+        ${expiring.length === 0 ? `<div class="row"><span>ไม่มีสินค้าใกล้หมดอายุ</span></div>` :
+          expiring.map(b=>{
+            const label = b.daysLeft < 0 ? `<span class="exp-warn">หมดอายุแล้ว ${Math.abs(b.daysLeft)} วัน</span>` :
+                          b.daysLeft === 0 ? `<span class="exp-warn">หมดอายุวันนี้</span>` :
+                          `<span class="exp-soon">เหลือ ${b.daysLeft} วัน</span>`;
+            return `<div class="row"><span>${escapeHtml(b.productName)} <span class="r-sub">(${escapeHtml(b.supplierName)}, คงเหลือ ${b.remainingQty})</span></span>${label}</div>`;
+          }).join('')}
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title">สินค้าใกล้หมดสต็อก (คงเหลือ ≤ 5)</div>
+      <div class="info-list">
+        ${lowStock.length === 0 ? `<div class="row"><span>ไม่มีสินค้าใกล้หมดตอนนี้</span></div>` :
+          lowStock.map(p=>`<div class="row"><span>${escapeHtml(p.name)}</span><span class="qty-warn">เหลือ ${p.stock} ${escapeHtml(p.unit||'')}</span></div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------------- PRODUCTS ---------------- */
+function renderProducts(){
+  let list = products.map(p=>({...p, stock:stockOf(p.id), avgCost:avgCostOf(p.id)}))
+    .filter(p => currentFilter === 'all' || p.category === currentFilter);
+  if(searchTerm.trim()){
+    const q = searchTerm.trim().toLowerCase();
+    list = list.filter(p => p.name.toLowerCase().includes(q));
+  }
+  list = list.sort((a,b)=> a.name.localeCompare(b.name, 'th'));
+
+  const toolbarHtml = `
+    <div class="toolbar">
+      <div class="tabs" id="catTabs">
+        <button class="tab ${currentFilter==='all'?'active':''}" data-cat="all">ทั้งหมด</button>
+        <button class="tab ${currentFilter==='frozen'?'active':''}" data-cat="frozen">แช่แข็ง</button>
+        <button class="tab ${currentFilter==='fresh'?'active':''}" data-cat="fresh">สด</button>
+      </div>
+      <input class="search" id="searchInput" type="text" placeholder="ค้นหาชื่อสินค้า..." value="${escapeHtml(searchTerm)}">
+      <button class="add-btn" id="openAddBtn">+ เพิ่มสินค้า</button>
+    </div>
+  `;
+
+  if(list.length === 0){
+    contentEl.innerHTML = toolbarHtml + `
+      <div class="empty">
+        <div class="empty-title">${products.length === 0 ? 'ยังไม่มีสินค้าในระบบ' : 'ไม่พบสินค้าที่ค้นหา'}</div>
+        <div>${products.length === 0 ? 'เริ่มเพิ่มสินค้าแรก หรือบันทึกการซื้อครั้งแรกในแท็บ "ซื้อสินค้า"' : 'ลองเปลี่ยนคำค้นหาหรือหมวดหมู่'}</div>
+      </div>`;
+    bindProductToolbar();
+    return;
+  }
+
+  const rows = list.map(p => {
+    const supplierCount = new Set(batchesForProduct(p.id).map(b=>b.supplierId)).size;
+    return `
+    <tr data-id="${p.id}">
+      <td>${escapeHtml(p.name)}</td>
+      <td><span class="tag ${p.category}">${p.category === 'frozen' ? 'แช่แข็ง' : 'สด'}</span></td>
+      <td>${escapeHtml(p.unit || '-')}</td>
+      <td class="${p.stock<=5?'stock-low':''}">${p.stock} ${escapeHtml(p.unit||'')}</td>
+      <td>
+        <span class="price-static">${formatBaht(p.avgCost)}</span><br>
+        ${supplierCount > 0 ? `<button class="link-btn" data-action="viewBatches" data-id="${p.id}">${supplierCount} ร้านค้า &raquo;</button>` : ''}
+      </td>
+      <td><span class="price" data-field="salePrice" data-id="${p.id}">${formatBaht(p.salePrice)}</span></td>
+      <td class="updated">${(()=>{const t=lastActivityOf(p.id); return t?formatUpdated(t):'-';})()}</td>
+      <td><button class="icon-btn" data-action="delete" data-id="${p.id}" title="ลบ">✕</button></td>
+    </tr>
+  `;}).join('');
+
+  contentEl.innerHTML = toolbarHtml + `
+    <table>
+      <thead><tr>
+        <th>ชื่อสินค้า</th><th>หมวด</th><th>หน่วย</th><th>สต็อก</th><th>ทุนเฉลี่ย (บาท)</th><th>ขาย (บาท)</th><th>อัปเดตล่าสุด</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  bindProductToolbar();
+  contentEl.querySelectorAll('.price').forEach(el=> el.addEventListener('click', onSalePriceClick));
+  contentEl.querySelectorAll('[data-action="delete"]').forEach(el=> el.addEventListener('click', onDeleteProduct));
+  contentEl.querySelectorAll('[data-action="viewBatches"]').forEach(el=> el.addEventListener('click', onViewBatches));
+}
+
+function bindProductToolbar(){
+  const catTabs = document.getElementById('catTabs');
+  if(catTabs) catTabs.addEventListener('click', (e)=>{ const btn = e.target.closest('.tab'); if(!btn) return; currentFilter = btn.dataset.cat; render(); });
+  const searchInput = document.getElementById('searchInput');
+  if(searchInput) searchInput.addEventListener('input', (e)=>{ searchTerm = e.target.value; render(); });
+  const openAddBtn = document.getElementById('openAddBtn');
+  if(openAddBtn) openAddBtn.addEventListener('click', ()=>{
+    document.getElementById('f_name').value = '';
+    document.getElementById('f_category').value = 'frozen';
+    document.getElementById('f_unit').value = '';
+    document.getElementById('f_sale').value = '';
+    overlay.classList.add('show');
+    document.getElementById('f_name').focus();
+  });
+}
+
+function onViewBatches(e){
+  const id = e.currentTarget.dataset.id;
+  const product = products.find(p=>p.id===id);
+  if(!product) return;
+  const list = batchesForProduct(id).filter(b=>b.remainingQty>0).sort((a,b)=>(a.date+a.createdAt).localeCompare(b.date+b.createdAt));
+  const cheapest = list.length ? Math.min(...list.map(b=>b.unitCost)) : null;
+
+  document.getElementById('batchModalTitle').textContent = `ล็อตคงเหลือ — ${product.name}`;
+  document.getElementById('batchModalBody').innerHTML = list.length === 0
+    ? `<div class="hint">ไม่มีล็อตคงเหลือสำหรับสินค้านี้</div>`
+    : `<div class="price-compare">
+        ${list.map(b=>`
+          <div class="pc-row ${b.unitCost===cheapest?'cheapest':''}">
+            <span>${escapeHtml(b.supplierName)} <span style="color:var(--ink-soft)">(${formatDateShort(b.date)}${b.expiryDate ? ', หมดอายุ '+formatDateShort(b.expiryDate) : ''})</span></span>
+            <span>เหลือ ${b.remainingQty} × ฿${formatBaht(b.unitCost)}${b.unitCost===cheapest?' <span class="tag best">ถูกสุด</span>':''}</span>
+          </div>`).join('')}
+      </div>
+      <div class="hint" style="margin-top:10px;">ระบบจะตัดสต็อกจากล็อตที่ซื้อก่อนออกก่อน (FIFO) เมื่อบันทึกการขาย</div>`;
+  batchOverlay.classList.add('show');
+}
+document.getElementById('batchCloseBtn').addEventListener('click', ()=> batchOverlay.classList.remove('show'));
+batchOverlay.addEventListener('click', (e)=>{ if(e.target === batchOverlay) batchOverlay.classList.remove('show'); });
+
+function onSalePriceClick(e){
+  const el = e.currentTarget;
+  const id = el.dataset.id;
+  const product = products.find(p => p.id === id);
+  if(!product) return;
+  const input = document.createElement('input');
+  input.type = 'number'; input.step = '0.01'; input.className = 'price-input';
+  input.value = product.salePrice;
+  el.replaceWith(input);
+  input.focus(); input.select();
+  const commit = async () => {
+    const val = parseFloat(input.value);
+    if(!isNaN(val) && val >= 0){
+      product.salePrice = val;
+      product.updatedAt = new Date().toISOString();
+      render();
+      await putDoc('products', product.id, product);
+      showToast('อัปเดตราคาขายแล้ว');
+    } else {
+      render();
+    }
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter') input.blur(); if(ev.key === 'Escape'){ input.removeEventListener('blur', commit); render(); } });
+}
+
+async function onDeleteProduct(e){
+  const id = e.currentTarget.dataset.id;
+  const product = products.find(p => p.id === id);
+  if(!product) return;
+  const stock = stockOf(id);
+  if(stock > 0){
+    if(!confirm(`"${product.name}" ยังมีสต็อกเหลือ ${stock} ${product.unit||''} ต้องการลบทิ้งจริงหรือไม่? (ล็อตที่เกี่ยวข้องจะถูกลบด้วย)`)) return;
+  } else {
+    if(!confirm(`ลบ "${product.name}" ออกจากระบบ?`)) return;
+  }
+  const relatedBatches = batchesForProduct(id);
+  products = products.filter(p => p.id !== id);
+  batches = batches.filter(b => b.productId !== id);
+  render();
+  await deleteDocRemote('products', id);
+  for(const b of relatedBatches){ await deleteDocRemote('batches', b.id); }
+  showToast('ลบสินค้าแล้ว');
+}
+
+document.getElementById('cancelBtn').addEventListener('click', ()=> overlay.classList.remove('show'));
+overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('f_name').value.trim();
+  const category = document.getElementById('f_category').value;
+  const unit = document.getElementById('f_unit').value.trim();
+  const salePrice = parseFloat(document.getElementById('f_sale').value) || 0;
+  if(!name){ alert('กรุณากรอกชื่อสินค้า'); return; }
+  if(findProductByName(name)){ alert('มีสินค้าชื่อนี้อยู่แล้ว'); return; }
+  const product = { id: uid('p'), name, category, unit, salePrice, updatedAt: new Date().toISOString() };
+  products.push(product);
+  overlay.classList.remove('show');
+  render();
+  await putDoc('products', product.id, product);
+  showToast('เพิ่มสินค้าแล้ว');
+});
+
+/* ---------------- PURCHASE ---------------- */
+function renderPurchase(){
+  contentEl.innerHTML = `
+    <div class="section-title">บันทึกการซื้อเข้า</div>
+    <div class="form-card">
+      <div class="field">
+        <label>ชื่อสินค้า</label>
+        <input type="text" id="pu_name" list="productNames" placeholder="พิมพ์ชื่อสินค้า (เดิมหรือใหม่)">
+        <datalist id="productNames">${products.map(p=>`<option value="${escapeHtml(p.name)}">`).join('')}</datalist>
+        <div class="hint" id="pu_pricecompare"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>หมวดหมู่</label><select id="pu_category"><option value="frozen">แช่แข็ง</option><option value="fresh">สด</option></select></div>
+        <div class="field"><label>หน่วย</label><input type="text" id="pu_unit" placeholder="กก. / แพ็ค / ชิ้น"></div>
+      </div>
+      <div class="field">
+        <label>ซื้อจากร้านค้า</label>
+        <input type="text" id="pu_supplier" list="supplierNames" placeholder="พิมพ์ชื่อร้านค้า (เดิมหรือใหม่)">
+        <datalist id="supplierNames">${suppliers.map(s=>`<option value="${escapeHtml(s.name)}">`).join('')}</datalist>
+      </div>
+      <div class="row2">
+        <div class="field"><label>จำนวนที่ซื้อ</label><input type="number" id="pu_qty" step="0.01" placeholder="0"></div>
+        <div class="field"><label>ราคาทุน/หน่วย (บาท)</label><input type="number" id="pu_cost" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>วันที่ซื้อ</label><input type="date" id="pu_date" value="${todayStr()}"></div>
+        <div class="field"><label>วันหมดอายุ (ถ้ามี)</label><input type="date" id="pu_expiry"></div>
+      </div>
+      <button class="btn-primary" id="pu_submit">บันทึกการซื้อ</button>
+    </div>
+  `;
+
+  const nameInput = document.getElementById('pu_name');
+  const catSelect = document.getElementById('pu_category');
+  const unitInput = document.getElementById('pu_unit');
+  const compareBox = document.getElementById('pu_pricecompare');
+
+  nameInput.addEventListener('input', ()=>{
+    const match = findProductByName(nameInput.value);
+    if(match){
+      catSelect.value = match.category;
+      unitInput.value = match.unit || '';
+      const rows = supplierPriceRows(match.id);
+      compareBox.innerHTML = rows.length === 0 ? `สินค้าเดิม — ยังไม่มีประวัติการซื้อ` :
+        `สินค้าเดิม — ราคาซื้อล่าสุดจากแต่ละร้าน:<div class="price-compare">${rows.map((r,i)=>`<div class="pc-row ${i===0?'cheapest':''}">${escapeHtml(r.supplierName)} <span>฿${formatBaht(r.unitCost)} (${formatDateShort(r.date)})</span></div>`).join('')}</div>`;
+    } else if(nameInput.value.trim()){
+      compareBox.textContent = 'สินค้าใหม่ — จะถูกเพิ่มเข้าระบบอัตโนมัติ';
+    } else {
+      compareBox.textContent = '';
+    }
+  });
+
+  document.getElementById('pu_submit').addEventListener('click', async ()=>{
+    const name = nameInput.value.trim();
+    const category = catSelect.value;
+    const unit = unitInput.value.trim();
+    const supplierName = document.getElementById('pu_supplier').value.trim();
+    const qty = parseFloat(document.getElementById('pu_qty').value);
+    const cost = parseFloat(document.getElementById('pu_cost').value);
+    const date = document.getElementById('pu_date').value || todayStr();
+    const expiryDate = document.getElementById('pu_expiry').value || null;
+
+    if(!name){ alert('กรุณากรอกชื่อสินค้า'); return; }
+    if(!supplierName){ alert('กรุณากรอกชื่อร้านค้าที่ซื้อ'); return; }
+    if(!qty || qty <= 0){ alert('กรุณากรอกจำนวนที่ถูกต้อง'); return; }
+    if(isNaN(cost) || cost < 0){ alert('กรุณากรอกราคาทุนที่ถูกต้อง'); return; }
+
+    let product = findProductByName(name);
+    if(!product){
+      product = { id: uid('p'), name, category, unit, salePrice:0, updatedAt: new Date().toISOString() };
+      products.push(product);
+    } else {
+      product.updatedAt = new Date().toISOString();
+    }
+    let supplier = findSupplierByName(supplierName);
+    let isNewSupplier = false;
+    if(!supplier){ supplier = { id: uid('s'), name: supplierName }; suppliers.push(supplier); isNewSupplier = true; }
+
+    const batch = {
+      id: uid('b'), productId: product.id, productName: product.name,
+      supplierId: supplier.id, supplierName: supplier.name,
+      qty, remainingQty: qty, unitCost: cost, date, expiryDate, createdAt: new Date().toISOString()
+    };
+    batches.push(batch);
+    renderPurchase();
+
+    await putDoc('products', product.id, product);
+    if(isNewSupplier) await putDoc('suppliers', supplier.id, supplier);
+    await putDoc('batches', batch.id, batch);
+    showToast(`บันทึกการซื้อ "${product.name}" จาก ${supplier.name} แล้ว`);
+  });
+}
+
+/* ---------------- IMPORT (image / text -> AI extraction -> review -> save as purchase batches) ---------------- */
+let importMode = 'image';
+let importImageFile = null;
+let importItems = [];
+let importParsing = false;
+
+const EXTRACT_INSTRUCTION = 'คุณเป็นระบบแยกข้อมูลราคาสินค้าจากรูปภาพหรือข้อความที่ผู้ใช้ส่งมา (ใบเสร็จ ใบส่งของ หรือข้อความอัปเดทราคาจากร้านค้าขายอาหารแช่แข็ง/อาหารสด) ให้แยกรายการสินค้าแต่ละบรรทัดออกมาเป็น JSON array เท่านั้น ห้ามมีคำอธิบาย คำนำ หรือ Markdown ใดๆ รูปแบบที่ต้องการ: [{"name":"ชื่อสินค้าภาษาไทย","qty":จำนวนที่ซื้อถ้าระบุไว้ (ตัวเลข หรือ null ถ้าไม่มี),"unit":"หน่วยถ้าระบุ เช่น กก. แพ็ค ชิ้น (string ว่างถ้าไม่มี)","price":ราคาต้นทุนต่อหน่วยเป็นตัวเลขเท่านั้น}] ถ้าอ่านราคาไม่ได้ในบรรทัดใดให้ข้ามบรรทัดนั้นไป ตอบเป็น JSON array อย่างเดียว';
+
+function renderImport(){
+  const noSample = !sampleCap;
+  contentEl.innerHTML = `
+    <div class="section-title">นำเข้าราคาต้นทุนจากรูปภาพหรือข้อความ</div>
+    <div class="form-card" style="max-width:560px;">
+      ${noSample ? `<div class="hint" style="margin-bottom:12px;color:var(--warn-ink);">ฟีเจอร์อ่านอัตโนมัติต้องเปิดหน้านี้ผ่านลิงก์ที่เผยแพร่แล้วบน Claude — ถ้ายังใช้ไม่ได้ ให้กรอกในแท็บ "ซื้อสินค้า" แทนไปก่อน</div>` : ''}
+      <div class="hint" style="margin-bottom:12px;">ส่งรูปใบเสร็จ/รายการราคาจากร้านค้า หรือวางข้อความอัปเดทราคา ระบบจะพยายามแยกชื่อสินค้า จำนวน และราคาให้อัตโนมัติ จากนั้นให้ตรวจสอบก่อนบันทึกจริง (สินค้าจำนวนมากมากๆ แนะนำแบ่งส่งทีละ ~20-30 รายการ เพื่อความแม่นยำ)</div>
+
+      <div class="mode-switch">
+        <button id="modeImgBtn" class="${importMode==='image'?'active':''}">รูปภาพ</button>
+        <button id="modeTxtBtn" class="${importMode==='text'?'active':''}">พิมพ์/วางข้อความ</button>
+      </div>
+
+      <div id="importInputArea"></div>
+
+      <div class="row2" style="margin-top:14px;">
+        <div class="field"><label>ซื้อจากร้านค้า</label><input type="text" id="im_supplier" list="supplierNamesImport" placeholder="ชื่อร้านค้า"><datalist id="supplierNamesImport">${suppliers.map(s=>`<option value="${escapeHtml(s.name)}">`).join('')}</datalist></div>
+        <div class="field"><label>วันที่ซื้อ</label><input type="date" id="im_date" value="${todayStr()}"></div>
+      </div>
+
+      <button class="btn-primary" id="im_parseBtn">อ่านและแยกรายการ</button>
+      <div class="import-progress" id="im_progress"><div class="spinner"></div><span>กำลังอ่านข้อมูล...</span></div>
+    </div>
+
+    <div id="importReviewArea"></div>
+  `;
+
+  renderImportInputArea();
+
+  document.getElementById('modeImgBtn').addEventListener('click', ()=>{ importMode='image'; renderImportInputArea(); });
+  document.getElementById('modeTxtBtn').addEventListener('click', ()=>{ importMode='text'; renderImportInputArea(); });
+  document.getElementById('im_parseBtn').addEventListener('click', onParseClick);
+
+  renderImportReview();
+}
+
+function renderImportInputArea(){
+  document.getElementById('modeImgBtn').classList.toggle('active', importMode==='image');
+  document.getElementById('modeTxtBtn').classList.toggle('active', importMode==='text');
+  const area = document.getElementById('importInputArea');
+  if(importMode === 'image'){
+    area.innerHTML = `
+      <div class="field">
+        <label>รูปใบเสร็จ / รายการราคา</label>
+        <div class="dropzone" id="dropzone">แตะเพื่อเลือกรูปภาพ (JPG/PNG)</div>
+        <input type="file" id="im_file" accept="image/*" style="display:none;">
+        <img id="im_preview" class="img-preview" style="display:none;">
+      </div>
+    `;
+    document.getElementById('dropzone').addEventListener('click', ()=> document.getElementById('im_file').click());
+    document.getElementById('im_file').addEventListener('change', onImageSelected);
+  } else {
+    area.innerHTML = `
+      <div class="field">
+        <label>ข้อความอัปเดทราคา</label>
+        <textarea id="im_text" placeholder="เช่น&#10;กุ้งขาว ไซส์กลาง 150 บาท/กก.&#10;ปลาหมึกแช่แข็ง 120/กก.&#10;คะน้า 25 บาท/กก."></textarea>
+      </div>
+    `;
+  }
+}
+
+function onImageSelected(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  importImageFile = file;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = document.getElementById('im_preview');
+    img.src = reader.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function callExtractAPI(){
+  if(!sampleCap){ const err = new Error('sample-unavailable'); err.code='not_granted'; throw err; }
+  if(importMode === 'image'){
+    if(!importImageFile) throw new Error('no-image');
+    return await sampleCap.json(EXTRACT_INSTRUCTION, { images: importImageFile, modelTier: 'default' });
+  } else {
+    const text = document.getElementById('im_text').value.trim();
+    if(!text) throw new Error('no-text');
+    return await sampleCap.json(EXTRACT_INSTRUCTION + '\n\nข้อความ:\n' + text, { modelTier: 'default' });
+  }
+}
+
+function extractErrorMessage(err){
+  const code = err && err.code;
+  if(code === 'not_granted') return 'ยังไม่อนุญาตให้หน้านี้ใช้ AI อ่านข้อมูล (หรือฟีเจอร์นี้ยังไม่พร้อมใช้งานนอกลิงก์ที่เผยแพร่)';
+  if(code === 'images_unavailable') return 'หน้านี้ยังไม่รองรับการส่งรูปภาพ ลองโหมด "พิมพ์/วางข้อความ" แทน';
+  if(code === 'image_rejected') return 'ไฟล์รูปภาพมีปัญหา (ชนิดไฟล์หรือขนาดไม่รองรับ) ลองรูปอื่น';
+  if(code === 'rate_limited') return 'ใช้งานถี่เกินไป กรุณารอสักครู่แล้วลองใหม่';
+  if(code === 'prompt_too_large') return 'ข้อความยาวเกินไป ลองแบ่งส่งเป็นชุดย่อย';
+  return 'อ่านข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง หรือกรอกด้วยตนเองในแท็บ "ซื้อสินค้า"';
+}
+
+async function onParseClick(){
+  if(importParsing) return;
+  const supplierName = document.getElementById('im_supplier').value.trim();
+  if(!supplierName){ alert('กรุณากรอกชื่อร้านค้าที่ซื้อก่อน'); return; }
+  if(importMode === 'image' && !importImageFile){ alert('กรุณาเลือกรูปภาพก่อน'); return; }
+  if(importMode === 'text' && !document.getElementById('im_text').value.trim()){ alert('กรุณาพิมพ์หรือวางข้อความก่อน'); return; }
+
+  importParsing = true;
+  document.getElementById('im_progress').classList.add('show');
+  document.getElementById('im_parseBtn').disabled = true;
+
+  try{
+    const rawItems = await callExtractAPI();
+    if(!Array.isArray(rawItems)) throw new Error('not-array');
+    importItems = rawItems
+      .filter(it => it && it.name && it.price != null && !isNaN(parseFloat(it.price)))
+      .map(it => ({
+        include: true,
+        name: String(it.name).trim(),
+        qty: (it.qty != null && !isNaN(parseFloat(it.qty))) ? parseFloat(it.qty) : 1,
+        unit: it.unit ? String(it.unit).trim() : '',
+        price: parseFloat(it.price),
+        category: (findProductByName(String(it.name).trim())||{}).category || 'frozen'
+      }));
+    if(importItems.length === 0){
+      showToast('อ่านข้อมูลไม่พบรายการที่ใช้ได้ ลองใหม่หรือพิมพ์เอง');
+    } else {
+      showToast(`อ่านได้ ${importItems.length} รายการ — กรุณาตรวจสอบก่อนบันทึก`);
+    }
+  }catch(err){
+    showToast(extractErrorMessage(err));
+  }
+
+  importParsing = false;
+  document.getElementById('im_progress').classList.remove('show');
+  document.getElementById('im_parseBtn').disabled = false;
+  renderImportReview();
+}
+
+function renderImportReview(){
+  const area = document.getElementById('importReviewArea');
+  if(!area) return;
+  if(importItems.length === 0){ area.innerHTML = ''; return; }
+
+  area.innerHTML = `
+    <div class="section-title" style="margin-top:22px;">ตรวจสอบรายการก่อนบันทึก (${importItems.length} รายการ)</div>
+    <table class="review-table">
+      <thead><tr><th></th><th>ชื่อสินค้า</th><th>หมวด</th><th>หน่วย</th><th>จำนวน</th><th>ราคาทุน/หน่วย</th><th></th></tr></thead>
+      <tbody>
+        ${importItems.map((it,i)=>`
+          <tr data-idx="${i}">
+            <td><input type="checkbox" data-f="include" ${it.include?'checked':''}></td>
+            <td><input type="text" data-f="name" value="${escapeHtml(it.name)}" list="productNamesImport"></td>
+            <td><select data-f="category"><option value="frozen" ${it.category==='frozen'?'selected':''}>แช่แข็ง</option><option value="fresh" ${it.category==='fresh'?'selected':''}>สด</option></select></td>
+            <td><input type="text" data-f="unit" value="${escapeHtml(it.unit)}" placeholder="กก."></td>
+            <td><input type="number" step="0.01" data-f="qty" value="${it.qty}"></td>
+            <td><input type="number" step="0.01" data-f="price" value="${it.price}"></td>
+            <td><button class="row-remove" data-action="removeRow">✕</button></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    <datalist id="productNamesImport">${products.map(p=>`<option value="${escapeHtml(p.name)}">`).join('')}</datalist>
+    <button class="btn-primary" id="im_confirmBtn" style="max-width:280px;margin-top:14px;">ยืนยันและบันทึกทั้งหมด</button>
+  `;
+
+  area.querySelectorAll('tr[data-idx]').forEach(row=>{
+    const idx = parseInt(row.dataset.idx,10);
+    row.querySelectorAll('[data-f]').forEach(input=>{
+      input.addEventListener('input', ()=>{
+        const field = input.dataset.f;
+        if(field === 'qty' || field === 'price') importItems[idx][field] = parseFloat(input.value) || 0;
+        else importItems[idx][field] = input.value;
+      });
+      input.addEventListener('change', ()=>{
+        if(input.dataset.f === 'include') importItems[idx].include = input.checked;
+      });
+    });
+    row.querySelector('[data-action="removeRow"]').addEventListener('click', ()=>{
+      importItems.splice(idx,1);
+      renderImportReview();
+    });
+  });
+
+  document.getElementById('im_confirmBtn').addEventListener('click', onConfirmImport);
+}
+
+async function onConfirmImport(){
+  const supplierName = document.getElementById('im_supplier').value.trim();
+  const date = document.getElementById('im_date').value || todayStr();
+  if(!supplierName){ alert('กรุณากรอกชื่อร้านค้า'); return; }
+
+  const toSave = importItems.filter(it => it.include && it.name.trim() && it.qty > 0 && it.price >= 0);
+  if(toSave.length === 0){ alert('ไม่มีรายการที่พร้อมบันทึก (ตรวจสอบว่าติ๊กเลือก และกรอกจำนวน/ราคาแล้ว)'); return; }
+
+  let supplier = findSupplierByName(supplierName);
+  let isNewSupplier = false;
+  if(!supplier){ supplier = { id: uid('s'), name: supplierName }; suppliers.push(supplier); isNewSupplier = true; }
+
+  const touchedProducts = new Map();
+  const newBatches = [];
+
+  toSave.forEach(it=>{
+    let product = findProductByName(it.name);
+    if(!product){
+      product = { id: uid('p'), name: it.name.trim(), category: it.category||'frozen', unit: it.unit||'', salePrice:0, updatedAt: new Date().toISOString() };
+      products.push(product);
+    } else {
+      product.updatedAt = new Date().toISOString();
+      if(it.unit && !product.unit) product.unit = it.unit;
+    }
+    touchedProducts.set(product.id, product);
+
+    const batch = {
+      id: uid('b'), productId: product.id, productName: product.name,
+      supplierId: supplier.id, supplierName: supplier.name,
+      qty: it.qty, remainingQty: it.qty, unitCost: it.price, date, expiryDate: null, createdAt: new Date().toISOString()
+    };
+    batches.push(batch);
+    newBatches.push(batch);
+  });
+
+  importItems = [];
+  importImageFile = null;
+  renderImport();
+
+  if(isNewSupplier) await putDoc('suppliers', supplier.id, supplier);
+  for(const p of touchedProducts.values()){ await putDoc('products', p.id, p); }
+  for(const b of newBatches){ await putDoc('batches', b.id, b); }
+  showToast(`บันทึกการซื้อจากไฟล์ที่นำเข้าแล้ว ${toSave.length} รายการ`);
+}
+
+/* ---------------- SELL (FIFO cost) ---------------- */
+function renderSell(){
+  const sellable = products.map(p=>({...p, stock:stockOf(p.id)})).filter(p=>p.stock > 0).sort((a,b)=>a.name.localeCompare(b.name,'th'));
+
+  if(products.length === 0){
+    contentEl.innerHTML = `<div class="empty"><div class="empty-title">ยังไม่มีสินค้าในระบบ</div><div>เพิ่มสินค้าหรือบันทึกการซื้อก่อน จึงจะขายได้</div></div>`;
+    return;
+  }
+
+  contentEl.innerHTML = `
+    <div class="section-title">บันทึกการขาย</div>
+    <div class="form-card">
+      <div class="field">
+        <label>เลือกสินค้า</label>
+        <select id="se_product">
+          <option value="">-- เลือกสินค้า --</option>
+          ${sellable.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (คงเหลือ ${p.stock} ${escapeHtml(p.unit||'')})</option>`).join('')}
+        </select>
+        ${sellable.length === 0 ? '<div class="hint">ไม่มีสินค้าที่มีสต็อกให้ขายตอนนี้</div>' : ''}
+      </div>
+      <div class="row2">
+        <div class="field"><label>จำนวนที่ขาย</label><input type="number" id="se_qty" step="0.01" placeholder="0"></div>
+        <div class="field"><label>ราคาขาย/หน่วย (บาท)</label><input type="number" id="se_price" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="field"><label>วันที่ขาย</label><input type="date" id="se_date" value="${todayStr()}"></div>
+      <div class="hint" id="se_hint" style="margin-bottom:12px;"></div>
+      <button class="btn-primary sell" id="se_submit">บันทึกการขาย</button>
+    </div>
+  `;
+
+  const productSelect = document.getElementById('se_product');
+  const priceInput = document.getElementById('se_price');
+  const hint = document.getElementById('se_hint');
+
+  productSelect.addEventListener('change', ()=>{
+    const product = products.find(p=>p.id === productSelect.value);
+    if(product){
+      priceInput.value = product.salePrice || '';
+      hint.innerHTML = `ทุนเฉลี่ยของสต็อกปัจจุบัน ฿${formatBaht(avgCostOf(product.id))} / ${product.unit||'หน่วย'} — ระบบจะตัดจากล็อตเก่าสุดก่อน (FIFO) เพื่อคิดต้นทุนจริง`;
+    } else { hint.textContent = ''; }
+  });
+
+  document.getElementById('se_submit').addEventListener('click', async ()=>{
+    const product = products.find(p=>p.id === productSelect.value);
+    const qty = parseFloat(document.getElementById('se_qty').value);
+    const price = parseFloat(priceInput.value);
+    const date = document.getElementById('se_date').value || todayStr();
+
+    if(!product){ alert('กรุณาเลือกสินค้า'); return; }
+    if(!qty || qty <= 0){ alert('กรุณากรอกจำนวนที่ถูกต้อง'); return; }
+    const available = stockOf(product.id);
+    if(qty > available){ alert(`สต็อกไม่พอ — คงเหลือ ${available} ${product.unit||''}`); return; }
+    if(isNaN(price) || price < 0){ alert('กรุณากรอกราคาขายที่ถูกต้อง'); return; }
+
+    const ordered = batchesForProduct(product.id).filter(b=>b.remainingQty>0)
+      .sort((a,b)=>(a.date+a.createdAt).localeCompare(b.date+b.createdAt));
+    let need = qty;
+    let totalCost = 0;
+    const breakdown = [];
+    const touchedBatches = [];
+    for(const b of ordered){
+      if(need <= 0) break;
+      const take = Math.min(b.remainingQty, need);
+      b.remainingQty -= take;
+      totalCost += take * b.unitCost;
+      breakdown.push({supplierName: b.supplierName, qty: take, unitCost: b.unitCost});
+      touchedBatches.push(b);
+      need -= take;
+    }
+
+    const revenue = qty * price;
+    const profit = revenue - totalCost;
+    product.salePrice = price;
+    product.updatedAt = new Date().toISOString();
+
+    const sale = {
+      id: uid('sa'), productId: product.id, productName: product.name,
+      qty, unitPrice: price, revenue, cost: totalCost, profit, breakdown, date, createdAt: new Date().toISOString()
+    };
+    sales.push(sale);
+    renderSell();
+
+    await putDoc('products', product.id, product);
+    for(const b of touchedBatches){ await putDoc('batches', b.id, b); }
+    await putDoc('sales', sale.id, sale);
+    showToast(`บันทึกการขาย "${product.name}" แล้ว (กำไร ฿${formatBaht(profit)})`);
+  });
+}
+
+/* ---------------- SUPPLIERS ---------------- */
+function renderSuppliers(){
+  contentEl.innerHTML = `
+    <div class="section-title">ร้านค้า/ซัพพลายเออร์</div>
+    <div class="form-card" style="margin-bottom:16px;">
+      <div class="field"><label>เพิ่มร้านค้าใหม่</label><input type="text" id="sup_name" placeholder="ชื่อร้านค้า"></div>
+      <button class="btn-primary" id="sup_add" style="width:auto;padding:9px 18px;">เพิ่มร้านค้า</button>
+    </div>
+    <div class="supplier-list" id="supplierList">
+      ${suppliers.length === 0 ? `<div class="supplier-row"><span>ยังไม่มีร้านค้าในระบบ</span></div>` :
+        suppliers.slice().sort((a,b)=>a.name.localeCompare(b.name,'th')).map(s=>{
+          const buyCount = batches.filter(b=>b.supplierId===s.id).length;
+          const totalSpend = batches.filter(b=>b.supplierId===s.id).reduce((sum,b)=>sum+b.qty*b.unitCost,0);
+          return `<div class="supplier-row"><span>${escapeHtml(s.name)} <span style="color:var(--ink-soft);font-size:12.5px;">(${buyCount} ครั้ง, ซื้อรวม ฿${formatBaht(totalSpend)})</span></span><button class="icon-btn" data-action="delSupplier" data-id="${s.id}">✕</button></div>`;
+        }).join('')}
+    </div>
+  `;
+
+  document.getElementById('sup_add').addEventListener('click', async ()=>{
+    const nameInput = document.getElementById('sup_name');
+    const name = nameInput.value.trim();
+    if(!name){ alert('กรุณากรอกชื่อร้านค้า'); return; }
+    if(findSupplierByName(name)){ alert('มีร้านค้านี้อยู่แล้ว'); return; }
+    const supplier = { id: uid('s'), name };
+    suppliers.push(supplier);
+    renderSuppliers();
+    await putDoc('suppliers', supplier.id, supplier);
+    showToast('เพิ่มร้านค้าแล้ว');
+  });
+
+  contentEl.querySelectorAll('[data-action="delSupplier"]').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      const id = e.currentTarget.dataset.id;
+      const s = suppliers.find(x=>x.id===id);
+      if(!s) return;
+      if(!confirm(`ลบร้านค้า "${s.name}"? (ประวัติการซื้อเดิมจะยังอยู่)`)) return;
+      suppliers = suppliers.filter(x=>x.id!==id);
+      renderSuppliers();
+      await deleteDocRemote('suppliers', id);
+      showToast('ลบร้านค้าแล้ว');
+    });
+  });
+}
+
+/* ---------------- HISTORY ---------------- */
+function renderHistory(){
+  const buyRows = batches.map(b=>({kind:'buy', date:b.date, createdAt:b.createdAt, productName:b.productName, supplierName:b.supplierName, qty:b.qty, unitPrice:b.unitCost, total:b.qty*b.unitCost, profit:null}));
+  const sellRows = sales.map(s=>({kind:'sell', date:s.date, createdAt:s.createdAt, productName:s.productName, supplierName:(s.breakdown||[]).map(x=>x.supplierName).filter((v,i,a)=>a.indexOf(v)===i).join(', '), qty:s.qty, unitPrice:s.unitPrice, total:s.revenue, profit:s.profit}));
+  const all = buyRows.concat(sellRows).sort((a,b)=> (b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+
+  if(all.length === 0){
+    contentEl.innerHTML = `<div class="empty"><div class="empty-title">ยังไม่มีประวัติรายการ</div><div>เริ่มบันทึกการซื้อหรือขายในแท็บที่เกี่ยวข้อง</div></div>`;
+    return;
+  }
+
+  const rows = all.map(t=>`
+    <tr>
+      <td class="updated">${t.date}</td>
+      <td><span class="tag ${t.kind}">${t.kind==='buy' ? 'ซื้อ' : 'ขาย'}</span></td>
+      <td>${escapeHtml(t.productName)}</td>
+      <td>${escapeHtml(t.supplierName||'-')}</td>
+      <td>${t.qty}</td>
+      <td>฿${formatBaht(t.unitPrice)}</td>
+      <td>฿${formatBaht(t.total)}</td>
+      <td>${t.kind==='sell' ? `<span class="profit-val">฿${formatBaht(t.profit)}</span>` : '-'}</td>
+    </tr>
+  `).join('');
+
+  contentEl.innerHTML = `
+    <div class="section-title">ประวัติการซื้อ-ขาย</div>
+    <table>
+      <thead><tr><th>วันที่</th><th>ประเภท</th><th>สินค้า</th><th>ร้านค้า</th><th>จำนวน</th><th>ราคา/หน่วย</th><th>รวม</th><th>กำไร</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+loadAll();
+</script>
+</body>
+</html>
